@@ -11,9 +11,10 @@ export default {
     password: process.env.DB_PASS,
   },
   googleCreds: {
-    // Insert google creds here
+    private_key: process.env.GOOGLE_CREDS_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    client_email: process.env.GOOGLE_CREDS_CLIENT_EMAIL,
   },
   googleDocs: {
-    key: process.env.GOOGLE_SHEET_KEY
-  }
+    key: process.env.GOOGLE_SHEET_KEY,
+  },
 };
