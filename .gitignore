@@ -1,0 +1,9 @@
+/node_modules/
+*.log
+coverage
+.vscode
+package-lock.json
+.directory
+.env
+/test/
+/config/session.json
