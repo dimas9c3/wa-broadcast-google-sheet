@@ -1,10 +1,27 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import moment from 'moment-timezone';
 import _ from 'lodash';
+import log4js from 'log4js';
 import config from '../config/config.js';
+import path from 'path';
+import { sleep } from '../utils/utils.js';
+
+const __dirname = path.resolve();
 
 moment().tz('Asia/Jakarta').format();
 moment.locale('id');
+
+log4js.configure({
+  appenders: {
+    file: {
+      type: 'file',
+      filename: path.join(__dirname, 'log/failed_broadcast.log'),
+    },
+  },
+  categories: { default: { appenders: ['file'], level: 'info' } },
+});
+
+const logger = log4js.getLogger('failed_broadcast');
 
 export class Listener {
   constructor(waClient) {
@@ -140,6 +157,7 @@ export class Listener {
     }
 
     const rows = await sheet.getRows(); // can pass in { limit, offset }
+    let seq = 0;
 
     rows.forEach(async element => {
       const number = element.Hp.trim();
@@ -147,7 +165,18 @@ export class Listener {
 
       const chatId = '62' + number.substring(1) + '@c.us';
 
-      await this.waClient.sendMessage(chatId, text);
+      try {
+        seq = seq + 1;
+
+        if (seq === 10) {
+          await sleep(1000);
+          seq = 0;
+        }
+
+        await this.waClient.sendMessage(chatId, text);
+      } catch (err) {
+        logger.info(number);
+      }
     });
 
     this.waClient.sendMessage(msg.from, `Broadcast berhasil dikirim`);
