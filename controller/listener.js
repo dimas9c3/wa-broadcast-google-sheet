@@ -180,8 +180,8 @@ export class Listener {
       try {
         seq = seq + 1;
 
-        if (seq === 10) {
-          await sleep(1000);
+        if (seq > 10) {
+          await sleep(3000);
           seq = 0;
         }
 
