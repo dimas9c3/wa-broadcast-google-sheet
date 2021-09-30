@@ -3,25 +3,39 @@ import moment from 'moment-timezone';
 import _ from 'lodash';
 import log4js from 'log4js';
 import config from '../config/config.js';
-import path from 'path';
+// import path from 'path';
 import { sleep } from '../utils/utils.js';
 
-const __dirname = path.resolve();
+// const __dirname = path.resolve();
 
 moment().tz('Asia/Jakarta').format();
 moment.locale('id');
 
 log4js.configure({
   appenders: {
-    file: {
-      type: 'file',
-      filename: path.join(__dirname, 'log/failed_broadcast.log'),
+    fileAppender: {
+      type: 'dateFile',
+      filename: './logs/broadcast.log',
+      layout: {
+        type: 'pattern',
+        pattern: '%d - %c:[%p]: %m',
+      },
+      flags: 'w',
+      pattern: '.yyyy-MM-dd',
+      compress: true,
+      alwaysIncludePattern: true,
+      // numToKeep: 3,
     },
   },
-  categories: { default: { appenders: ['file'], level: 'info' } },
+  categories: {
+    default: {
+      appenders: ['fileAppender'],
+      level: 'info',
+    },
+  },
 });
 
-const logger = log4js.getLogger('failed_broadcast');
+const logger = log4js.getLogger();
 
 export class Listener {
   constructor(waClient) {
@@ -160,10 +174,8 @@ export class Listener {
     let seq = 0;
 
     rows.forEach(async element => {
-      const number = element.Hp.trim();
+      const no = element.Hp.trim();
       const text = `${rows[0].Text}`;
-
-      const chatId = '62' + number.substring(1) + '@c.us';
 
       try {
         seq = seq + 1;
@@ -173,9 +185,22 @@ export class Listener {
           seq = 0;
         }
 
-        await this.waClient.sendMessage(chatId, text);
+        const number = '62' + no.substring(1) + '@c.us';
+        const number_details = await this.waClient.getNumberId(number); // get mobile number details
+
+        if (number_details) {
+          // eslint-disable-next-line no-underscore-dangle
+          await this.waClient.sendMessage(number_details._serialized, text); // send message
+          logger.info(`SUCCESS : ${no}`);
+        } else {
+          logger.info(`FAILED : ${no}`);
+          console.log(number, 'Mobile number is not registered');
+        }
+
+        // await this.waClient.sendMessage(chatId, text);
       } catch (err) {
-        logger.info(number);
+        console.log(err);
+        logger.info(`FAILED : ${no}`);
       }
     });
 
