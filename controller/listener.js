@@ -191,10 +191,10 @@ export class Listener {
         if (number_details) {
           // eslint-disable-next-line no-underscore-dangle
           await this.waClient.sendMessage(number_details._serialized, text); // send message
-          logger.info(`SUCCESS : ${no}`);
+          await logger.info(`SUCCESS : ${no}`);
         } else {
-          logger.info(`FAILED : ${no}`);
-          console.log(number, 'Mobile number is not registered');
+          await logger.info(`FAILED : ${no}`);
+          console.log(no, 'Nomer Belum Teregistrasi WA');
         }
 
         // await this.waClient.sendMessage(chatId, text);
@@ -204,6 +204,6 @@ export class Listener {
       }
     });
 
-    this.waClient.sendMessage(msg.from, `Broadcast berhasil dikirim`);
+    await this.waClient.sendMessage(msg.from, `Broadcast berhasil dikirim`);
   }
 }
