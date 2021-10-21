@@ -193,10 +193,10 @@ export class Listener {
           if (number_details) {
             // eslint-disable-next-line no-underscore-dangle
             await this.waClient.sendMessage(number_details._serialized, text); // send message
-            await logger.info(`SUCCESS : ${no}`);
+            logger.info(`SUCCESS : ${no}`);
           } else {
             failedNumber.push(no);
-            await logger.info(`FAILED : ${no}`);
+            logger.info(`FAILED : ${no}`);
             console.log(no, 'Nomer Belum Teregistrasi WA');
           }
         } catch (err) {
