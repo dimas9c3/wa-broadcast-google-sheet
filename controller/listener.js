@@ -172,38 +172,47 @@ export class Listener {
 
     const rows = await sheet.getRows(); // can pass in { limit, offset }
     let seq = 0;
+    const failedNumber = [];
 
-    rows.forEach(async element => {
-      const no = element.Hp.trim();
-      const text = `${rows[0].Text}`;
+    const sendMsg = await Promise.all(
+      rows.map(async element => {
+        const no = element.Hp.trim();
+        const text = `${rows[0].Text}`;
 
-      try {
-        seq = seq + 1;
+        try {
+          seq = seq + 1;
 
-        if (seq > 10) {
-          await sleep(3000);
-          seq = 0;
+          if (seq % 10 === 0) {
+            // Sleep 10 seconds
+            await sleep(10000);
+          }
+
+          const number = '62' + no.substring(1) + '@c.us';
+          const number_details = await this.waClient.getNumberId(number); // get mobile number details
+
+          if (number_details) {
+            // eslint-disable-next-line no-underscore-dangle
+            await this.waClient.sendMessage(number_details._serialized, text); // send message
+            await logger.info(`SUCCESS : ${no}`);
+          } else {
+            failedNumber.push(no);
+            await logger.info(`FAILED : ${no}`);
+            console.log(no, 'Nomer Belum Teregistrasi WA');
+          }
+        } catch (err) {
+          console.log(err);
+          logger.info(`FAILED : ${no}`);
         }
-
-        const number = '62' + no.substring(1) + '@c.us';
-        const number_details = await this.waClient.getNumberId(number); // get mobile number details
-
-        if (number_details) {
-          // eslint-disable-next-line no-underscore-dangle
-          await this.waClient.sendMessage(number_details._serialized, text); // send message
-          await logger.info(`SUCCESS : ${no}`);
-        } else {
-          await logger.info(`FAILED : ${no}`);
-          console.log(no, 'Nomer Belum Teregistrasi WA');
-        }
-
-        // await this.waClient.sendMessage(chatId, text);
-      } catch (err) {
-        console.log(err);
-        logger.info(`FAILED : ${no}`);
+      })
+    ).then(async () => {
+      if (failedNumber.length > 0) {
+        await this.waClient.sendMessage(
+          msg.from,
+          `Nomor yang gagal dikirim : ${failedNumber.join('\n')}`
+        );
       }
-    });
 
-    await this.waClient.sendMessage(msg.from, `Broadcast berhasil dikirim`);
+      await this.waClient.sendMessage(msg.from, `Broadcast berhasil dikirim`);
+    });
   }
 }
