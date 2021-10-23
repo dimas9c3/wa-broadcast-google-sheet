@@ -11,7 +11,7 @@ import { Listener } from './controller/listener.js';
   }
 
   const client = new Client({
-    puppeteer: { headless: true },
+    puppeteer: { headless: false },
     session: sessionCfg,
   });
 
