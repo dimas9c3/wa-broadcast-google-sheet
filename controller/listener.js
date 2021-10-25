@@ -171,20 +171,15 @@ export class Listener {
     }
 
     const rows = await sheet.getRows(); // can pass in { limit, offset }
-    let seq = 0;
     const failedNumber = [];
 
     const sendMsg = await Promise.all(
       rows.map(async element => {
+        // Sleep 1 seconds
+        await sleep(1000);
+
         const no    = element.Hp.trim();
         const text  = `${rows[0].Text}`;
-
-        seq = seq + 1;
-
-        if (seq % 10 === 0) {
-          // Sleep 10 seconds
-          await sleep(10000);
-        }
 
         const number = '62' + no.substring(1) + '@c.us';
         const number_details = await this.waClient.getNumberId(number); // get mobile number details
