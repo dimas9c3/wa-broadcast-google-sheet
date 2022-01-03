@@ -177,7 +177,7 @@ export class Listener {
       await sleep(1000);
 
       const no = element.Hp.trim();
-      const text = `Bapak/Ibu ${element.Nama.trim()} ${rows[0].Text}`;
+      const text = `Saudara/Saudari ${element.Nama.trim()} ${rows[0].Text}`;
 
       const number = '62' + no.substring(1) + '@c.us';
       const number_details = await this.waClient.getNumberId(number); // get mobile number details
