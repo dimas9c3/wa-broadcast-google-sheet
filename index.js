@@ -1,4 +1,5 @@
-import { Client } from 'whatsapp-web.js';
+import pkg from 'whatsapp-web.js';
+const { Client, LegacySessionAuth  } = pkg;
 import fs from 'fs';
 import { Listener } from './controller/listener.js';
 
@@ -12,7 +13,9 @@ import { Listener } from './controller/listener.js';
 
   const client = new Client({
     puppeteer: { headless: false },
-    session: sessionCfg,
+    authStrategy: new LegacySessionAuth({
+      session: sessionCfg
+    })
   });
 
   client.initialize();
