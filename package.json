@@ -23,9 +23,10 @@
     "moment-timezone": "^0.5.33",
     "mysql2": "^2.2.5",
     "node-cron": "^3.0.0",
+    "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.6.5",
     "sequelize-auto": "^0.8.3",
-    "whatsapp-web.js": "^1.16.4"
+    "whatsapp-web.js": "^1.16.5"
   },
   "devDependencies": {
     "eslint": "^7.27.0",

@@ -8,3 +8,4 @@ package-lock.json
 /test/
 /config/session.json
 /logs/*
+.wwebjs_auth

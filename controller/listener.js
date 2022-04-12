@@ -4,6 +4,7 @@ import _ from 'lodash';
 import log4js from 'log4js';
 import config from '../config/config.js';
 // import path from 'path';
+import qrcode from 'qrcode-terminal';
 import { sleep } from '../utils/utils.js';
 
 // const __dirname = path.resolve();
@@ -80,7 +81,11 @@ export class Listener {
 
     this.waClient.on('qr', qr => {
       // NOTE: This event will not be fired if a session is specified.
-      console.log('QR RECEIVED', qr);
+      qrcode.generate(qr, {small: true});
+    });
+
+    this.waClient.on('authenticated', () => {
+      console.log('AUTHENTICATED');
     });
 
     this.waClient.on('auth_failure', msg => {

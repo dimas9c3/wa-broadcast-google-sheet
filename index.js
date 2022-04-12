@@ -1,5 +1,5 @@
 import pkg from 'whatsapp-web.js';
-const { Client, LegacySessionAuth  } = pkg;
+const { Client, LegacySessionAuth, LocalAuth } = pkg;
 import fs from 'fs';
 import { Listener } from './controller/listener.js';
 
@@ -13,22 +13,10 @@ import { Listener } from './controller/listener.js';
 
   const client = new Client({
     puppeteer: { headless: false },
-    authStrategy: new LegacySessionAuth({
-      session: sessionCfg
-    })
+    authStrategy: new LocalAuth()
   });
 
   client.initialize();
-
-  client.on('authenticated', session => {
-    console.log('AUTHENTICATED', session);
-    sessionCfg = session;
-    fs.writeFile(SESSION_FILE_PATH, JSON.stringify(session), function (err) {
-      if (err) {
-        console.error(err);
-      }
-    });
-  });
 
   const listenerInstance = new Listener(client);
   listenerInstance.listen();
