@@ -190,7 +190,7 @@ export class Listener {
 
       if (number_details) {
         // eslint-disable-next-line no-underscore-dangle
-        await this.waClient.sendMessage(number_details._serialized, text); // send message
+        await this.waClient.sendMessage(number_details._serialized, txt); // send message
         logger.info(`SUCCESS : ${no}`);
       } else {
         failedNumber.push(no);

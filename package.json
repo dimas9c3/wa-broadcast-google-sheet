@@ -26,7 +26,7 @@
     "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.6.5",
     "sequelize-auto": "^0.8.3",
-    "whatsapp-web.js": "^1.16.5"
+    "whatsapp-web.js": "^1.16.6"
   },
   "devDependencies": {
     "eslint": "^7.27.0",
