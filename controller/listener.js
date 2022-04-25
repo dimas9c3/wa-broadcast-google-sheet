@@ -193,8 +193,8 @@ export class Listener {
         await this.waClient.sendMessage(number_details._serialized, txt); // send message
         logger.info(`SUCCESS : ${no}`);
       } else {
-        failedNumber.push(no);
-        logger.info(`FAILED : ${no}`);
+        failedNumber.push(`${element.Dynamic_1} - ${no}`);
+        logger.info(`FAILED : ${element.Dynamic_1} - ${no}`);
         console.log(no, 'Nomer Belum Teregistrasi WA');
       }
     }
