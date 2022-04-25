@@ -181,9 +181,9 @@ export class Listener {
     for await (let element of rows) {
       await sleep(1000);
 
-      const no  = element.Hp.trim();
-      let txt   = rows[0].Text.replace("[Dynamic_1]", element.Dynamic_1.trim());
-      txt       = txt.replace("[Dynamic_2]", element.Dynamic_2.trim());
+      const no  = element.Hp ?? "-";
+      let txt   = rows[0].Text.replace("[Dynamic_1]", element.Dynamic_1);
+      txt       = txt.replace("[Dynamic_2]", element.Dynamic_2);
 
       const number = '62' + no.substring(1) + '@c.us';
       const number_details = await this.waClient.getNumberId(number); // get mobile number details
