@@ -25,6 +25,7 @@
     "mysql2": "^2.2.5",
     "node-cron": "^3.0.0",
     "pino": "^7.9.2",
+    "pm2": "^5.2.0",
     "qrcode-terminal": "^0.12.0",
     "sequelize": "^6.6.5",
     "sequelize-auto": "^0.8.3"
