@@ -50,7 +50,7 @@ const makeWASocket = pkg.default;
             if(connection === 'close') {
               // reconnect if not logged out
               if(lastDisconnect?.error) {
-                //process.exit();
+                // process.exit();
                 startSock()
               } else {
                 console.log('Connection closed. You are logged out.')

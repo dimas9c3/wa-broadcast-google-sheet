@@ -1,11 +1,15 @@
-/node_modules/
+
+node_modules
 *.log
 coverage
 .vscode
 package-lock.json
 .directory
 .env
+
+/node_modules/
 /test/
+/config/auth/
+/config/baileys_store.json
 /config/session.json
 /logs/*
-node_modules
