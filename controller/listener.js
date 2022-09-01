@@ -1,11 +1,12 @@
+import pkg from '@adiwajshing/baileys';
+const { delay } = pkg;
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import moment from 'moment-timezone';
 import _ from 'lodash';
 import log4js from 'log4js';
 import config from '../config/config.js';
 // import path from 'path';
-import qrcode from 'qrcode-terminal';
-import { sleep } from '../utils/utils.js';
+import { nullSafety, sleep } from '../utils/utils.js';
 
 // const __dirname = path.resolve();
 
@@ -39,139 +40,68 @@ log4js.configure({
 const logger = log4js.getLogger();
 
 export class Listener {
-  constructor(waClient) {
+  constructor(waClient, events) {
     this.waClient = waClient;
+    this.events = events;
 
     this.doc = new GoogleSpreadsheet(config.googleDocs.key);
-
-    this.initDoc();
-  }
-
-  async initDoc() {
-    await this.doc.useServiceAccountAuth(config.googleCreds);
-    await this.doc.loadInfo(); // loads document properties and worksheets
   }
 
   async listen() {
-    this.waClient.on('ready', async () => {
-      // this.handleSendByTitle('Sheet3');
-      // const sheet = this.doc.sheetsByIndex[0];
-      // const rows = await sheet.getRows();
-      // rows.forEach(element => {
-      //   console.log(element);
-      //   const number = element.Hp.trim();
-      //   const text = `Whatsapp bot broadcast testing to contacts : ${element.Nama}`;
-      //   const chatId = '62' + number.substring(1) + '@c.us';
-      //   // this.waClient.sendMessage(chatId, text);
-      // });
-    });
+    await this.doc.useServiceAccountAuth(config.googleCreds);
+    await this.doc.loadInfo(); // loads document properties and worksheets
+    
+    if (this.events['messages.upsert']) {
+      const upsert = this.events['messages.upsert']
 
-    this.waClient.on('message', async msg => {
-      console.log('MESSAGE RECEIVED', msg);
-
-      if (msg.body === '!ping') {
-        // Send a new message as a reply to the current one
-        msg.reply(
-          `Server status alive ${moment().format('MMMM Do YYYY, h:mm:ss a')}`
-        );
-      } else if (msg.body.startsWith('!sendbroadcast ')) {
-        this.handleSendByTitle(msg);
+      if (upsert.type === 'notify' || upsert.type === 'append') {
+        console.log(JSON.stringify(upsert, undefined, 2));
       }
-    });
 
-    this.waClient.on('qr', qr => {
-      // NOTE: This event will not be fired if a session is specified.
-      qrcode.generate(qr, {small: true});
-    });
-
-    this.waClient.on('authenticated', () => {
-      console.log('AUTHENTICATED');
-    });
-
-    this.waClient.on('auth_failure', msg => {
-      // Fired if session restore was unsuccessfull
-      console.error('AUTHENTICATION FAILURE', msg);
-    });
-
-    this.waClient.on('message_create', msg => {
-      // Fired on all message creations, including your own
-      if (msg.fromMe) {
-        // do stuff here
+      if (upsert.type === 'notify') {
+        for (const msg of upsert.messages) {
+          if (!msg.key.fromMe) {
+            if (!_.isNil(msg.message) && msg.message.conversation === '!ping') {
+              await this.waClient.readMessages([msg.key]);
+              await this.sendMessageWTyping({ text: `Server status alive ${moment().format('MMMM Do YYYY, h:mm:ss a')}` }, msg.key.remoteJid)
+            } 
+            else if (!_.isNil(msg.message) && msg.message.conversation.startsWith('!sendbroadcast ')) {
+              await this.waClient.readMessages([msg.key]);
+              await this.handleSendByTitle(msg);
+            }
+            else if (!_.isNil(msg.message) && msg.message.conversation.startsWith('!sendbroadcastfile ')) {
+              await this.waClient.readMessages([msg.key]);
+              await this.handleSendAttachmentByTitle(msg);
+            }
+            // // Autoreply template message this must be end
+            // else if (!_.isNil(msg.message) && msg.message.conversation.length > 10) {
+            //   await this.waClient.readMessages([msg.key]);
+            //   await this.sendMessageWTyping({ text: `*Pesan otomatis, mohon berkenan untuk tidak membalas pesan ini*` }, msg.key.remoteJid)
+            // }
+          }
+        }
       }
-    });
+    }
+  }
 
-    this.waClient.on('message_revoke_everyone', async (after, before) => {
-      // Fired whenever a message is deleted by anyone (including you)
-      console.log(after); // message after it was deleted.
-      if (before) {
-        console.log(before); // message before it was deleted.
-      }
-    });
+  async sendMessageWTyping(msg, jid) {
+    await this.waClient.presenceSubscribe(jid);
+    await delay(500);
 
-    this.waClient.on('message_revoke_me', async msg => {
-      // Fired whenever a message is only deleted in your own view.
-      console.log(msg.body); // message before it was deleted.
-    });
+    await this.waClient.sendPresenceUpdate('composing', jid);
+    await delay(1000);
 
-    this.waClient.on('message_ack', (msg, ack) => {
-      /*
-                == ACK VALUES ==
-                ACK_ERROR: -1
-                ACK_PENDING: 0
-                ACK_SERVER: 1
-                ACK_DEVICE: 2
-                ACK_READ: 3
-                ACK_PLAYED: 4
-            */
+    await this.waClient.sendPresenceUpdate('paused', jid);
 
-      if (ack == 3) {
-        // The message was read
-      }
-    });
-
-    this.waClient.on('group_join', notification => {
-      // User has joined or been added to the group.
-      console.log('join', notification);
-      notification.reply('User joined.');
-    });
-
-    this.waClient.on('group_leave', notification => {
-      // User has left or been kicked from the group.
-      console.log('leave', notification);
-      notification.reply('User left.');
-    });
-
-    this.waClient.on('group_update', notification => {
-      // Group picture, subject or description has been updated.
-      console.log('update', notification);
-    });
-
-    this.waClient.on('change_battery', batteryInfo => {
-      // Battery percentage for attached device has changed
-      const { battery, plugged } = batteryInfo;
-      console.log(`Battery: ${battery}% - Charging? ${plugged}`);
-    });
-
-    this.waClient.on('change_state', state => {
-      console.log('CHANGE STATE', state);
-    });
-
-    this.waClient.on('disconnected', reason => {
-      console.log('this.waClient was logged out', reason);
-    });
+    await this.waClient.sendMessage(jid, msg);
   }
 
   async handleSendByTitle(msg = {}) {
-    if (_.isNil(msg.body)) {
-      this.waClient.sendMessage(msg.from, `Request tidak valid`);
-      return false;
-    }
-
-    const title = msg.body.slice(15).trim();
+    const title = msg.message.conversation.slice(15).trim();
     const sheet = this.doc.sheetsByTitle[title];
 
     if (_.isNil(sheet)) {
-      this.waClient.sendMessage(msg.from, `Judul sheet tidak ditemukan`);
+      await this.sendMessageWTyping({ text: `Judul sheet tidak ditemukan` }, msg.key.remoteJid);
       return false;
     }
 
@@ -181,31 +111,125 @@ export class Listener {
     for await (let element of rows) {
       await sleep(1000);
 
-      const no  = element.Hp ?? "-";
-      let txt   = rows[0].Text.replace("[Dynamic_1]", element.Dynamic_1);
-      txt       = txt.replace("[Dynamic_2]", element.Dynamic_2);
+      const no = element.Hp.trim();
+      const id = '62' + no.substring(1);
+      const number = '62' + no.substring(1) + '@s.whatsapp.net';
+      let txt = rows[0].Text.replace("[Dynamic_1]", element.Dynamic_1);
+      txt = txt.replace("[Dynamic_2]", element.Dynamic_2);
 
-      const number = '62' + no.substring(1) + '@c.us';
-      const number_details = await this.waClient.getNumberId(number); // get mobile number details
+      const result = await this.waClient.onWhatsApp(id);
 
-      if (number_details) {
-        // eslint-disable-next-line no-underscore-dangle
-        await this.waClient.sendMessage(number_details._serialized, txt); // send message
+      if (!_.isNil(result) && result.length > 0) {
+        await this.waClient.sendMessage(number, { text: txt });
         logger.info(`SUCCESS : ${no}`);
       } else {
-        failedNumber.push(`${element.Dynamic_1} - ${no}`);
-        logger.info(`FAILED : ${element.Dynamic_1} - ${no}`);
+        failedNumber.push(no);
+        logger.info(`FAILED : ${no}`);
         console.log(no, 'Nomer Belum Teregistrasi WA');
       }
     }
 
     if (failedNumber.length > 0) {
-      await this.waClient.sendMessage(
-        msg.from,
-        `Nomor yang gagal dikirim : \n${failedNumber.join('\n')}`
-      );
+      await this.waClient.sendMessage(msg.key.remoteJid, { text: `Nomor yang gagal dikirim : \n${failedNumber.join('\n')}` });
     }
 
-    await this.waClient.sendMessage(msg.from, `Broadcast berhasil dikirim`);
+    await this.waClient.sendMessage(msg.key.remoteJid, { text: `Broadcast berhasil dikirim` });
+  }
+
+  async handleSendAttachmentByTitle(msg = {}) {
+    const title = msg.message.conversation.slice(19).trim();
+    const sheet = this.doc.sheetsByTitle[title];
+
+    if (_.isNil(sheet)) {
+      await this.sendMessageWTyping({ text: `Judul sheet tidak ditemukan` }, msg.key.remoteJid);
+      return false;
+    }
+
+    const rows = await sheet.getRows(); // can pass in { limit, offset }
+    const failedNumber = [];
+
+    for await (let element of rows) {
+      await sleep(1000);
+
+      const no = element.Hp.trim();
+      const id = '62' + no.substring(1);
+      const number = '62' + no.substring(1) + '@s.whatsapp.net';
+      let txt = rows[0].Text.replace("[Dynamic_1]", element.Dynamic_1);
+      txt = txt.replace("[Dynamic_2]", element.Dynamic_2);
+
+      let messageOne;
+      let messageOneTxt;
+      if (rows[0].Attachment_Type == "image") {
+        messageOne = {
+          image: { url: `${rows[0].Attachment}` },
+          caption: txt
+        }
+        messageOneTxt = "";
+      } else {
+        if (rows[0].Attachment_Type == "xls") {
+          messageOne = {
+            document: { url: `${rows[0].Attachment}` },
+            mimetype: "application/vnd.ms-excel",
+            fileName: 'Attachment_file.xls',
+          }
+        }
+        else if (rows[0].Attachment_Type == "xlsx") {
+          messageOne = {
+            document: { url: `${rows[0].Attachment}` },
+            mimetype: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            fileName: 'Attachment_file.xlsx',
+          }
+        }
+        else if (rows[0].Attachment_Type == "doc") {
+          messageOne = {
+            document: { url: `${rows[0].Attachment}` },
+            mimetype: "application/msword",
+            fileName: 'Attachment_file.doc',
+          }
+        }
+        else if (rows[0].Attachment_Type == "docx") {
+          messageOne = {
+            document: { url: `${rows[0].Attachment}` },
+            mimetype: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            fileName: 'Attachment_file.docx',
+          }
+        }
+        else if (rows[0].Attachment_Type == "pdf") {
+          messageOne = {
+            document: { url: `${rows[0].Attachment}` },
+            mimetype: "application/pdf",
+            fileName: 'Attachment_file.pdf',
+          }
+        }
+
+        messageOneTxt = {
+          text: txt
+        }
+
+      }
+
+      const result = await this.waClient.onWhatsApp(id);
+
+      if (!_.isNil(result) && result.length > 0) {
+
+        if (messageOneTxt != "") {
+          await this.waClient.sendMessage(number, messageOneTxt);
+        }
+
+        await this.waClient.sendMessage(number, messageOne);
+
+        logger.info(`SUCCESS : ${no}`);
+      } else {
+        failedNumber.push(no);
+        logger.info(`FAILED : ${no}`);
+        console.log(no, 'Nomer Belum Teregistrasi WA');
+      }
+    }
+
+    if (failedNumber.length > 0) {
+      await this.waClient.sendMessage(msg.key.remoteJid, { text: `Nomor yang gagal dikirim : \n${failedNumber.join('\n')}` });
+    }
+
+    await this.waClient.sendMessage(msg.key.remoteJid, { text: `Broadcast berhasil dikirim` });
   }
 }
