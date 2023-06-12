@@ -1,9 +1,9 @@
-import pkg from '@adiwajshing/baileys';
+import pkg from '@whiskeysockets/baileys';
 import {
   fetchLatestBaileysVersion,
   makeInMemoryStore,
   useMultiFileAuthState ,
-} from '@adiwajshing/baileys';
+} from '@whiskeysockets/baileys';
 // import { Boom } from '@hapi/boom';
 import P from 'pino';
 import { Listener } from './controller/listener.js';

@@ -1,4 +1,4 @@
-import pkg from '@adiwajshing/baileys';
+import pkg from '@whiskeysockets/baileys';
 const { delay } = pkg;
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import moment from 'moment-timezone';

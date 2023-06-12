@@ -12,9 +12,9 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "@adiwajshing/baileys": "^4.4.0",
     "@adiwajshing/keyed-db": "^0.2.4",
     "@hapi/boom": "^9.1.4",
+    "@whiskeysockets/baileys": "^6.2.1",
     "debug": "^4.3.1",
     "dotenv": "^10.0.0",
     "google-spreadsheet": "^3.1.15",
