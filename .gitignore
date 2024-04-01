@@ -1,14 +1,12 @@
-node_modules
-*.log
-coverage
-.vscode
-package-lock.json
-.directory
-.env
+# IDE Files
+#-------------------------
+/nbproject/
+.idea/*
 
-/node_modules/
-/test/
-/config/auth/
-/config/baileys_store.json
-/config/session.json
-/logs/*
+## Sublime Text cache files
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
